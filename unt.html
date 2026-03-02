@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Akai MPX8 Professional Replica</title>
+    <style>
+        :root {
+            --bg-body: #111;
+            --panel-color: #2b2b2b;
+            --display-blue: #50b0ff;
+            --pad-border: #ff7f50;
+            --pad-bg: #3d3d3d;
+            --pad-active: #39ff14; 
+        }
+
+        body {
+            background-color: var(--bg-body);
+            color: white;
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            user-select: none;
+            touch-action: none;
+        }
+
+        @media screen and (orientation: portrait) {
+            #landscape-warning { display: flex; }
+            #mpx8-container { display: none; }
+        }
+        @media screen and (orientation: landscape) {
+            #landscape-warning { display: none; }
+            #mpx8-container { display: grid; }
+        }
+
+        #landscape-warning {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: black; z-index: 1000;
+            flex-direction: column; justify-content: center; align-items: center;
+            text-align: center; padding: 20px;
+        }
+
+        #mpx8-container {
+            width: 95vw;
+            height: 85vh;
+            background: var(--panel-color);
+            border-radius: 15px;
+            padding: 25px;
+            display: grid;
+            grid-template-columns: 320px 1fr;
+            gap: 30px;
+            box-shadow: inset 0 0 60px rgba(0,0,0,0.7), 0 20px 50px rgba(0,0,0,0.9);
+            border: 1px solid #444;
+            position: relative;
+        }
+
+        .left-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .display-screen {
+            background: #001a35;
+            border: 6px solid #111;
+            padding: 15px;
+            color: var(--display-blue);
+            font-family: 'Courier New', monospace;
+            box-shadow: inset 0 0 20px rgba(0,136,255,0.4);
+            height: 140px;
+        }
+
+        .display-top { display: flex; justify-content: space-between; border-bottom: 1px solid var(--display-blue); padding-bottom: 5px; font-weight: bold; }
+        .sample-name { font-size: 1.6rem; margin: 15px 0; font-weight: bold; overflow: hidden; white-space: nowrap; text-transform: uppercase; }
+        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; font-size: 0.8rem; gap: 5px; }
+
+        .controls-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+            flex-grow: 1;
+            justify-content: center;
+        }
+
+        .data-knob {
+            width: 100px; height: 100px;
+            background: repeating-conic-gradient(#333 0deg 10deg, #222 10deg 20deg);
+            border-radius: 50%;
+            border: 5px solid #000;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+            cursor: ns-resize;
+            position: relative;
+            touch-action: none;
+        }
+        .data-knob::after {
+            content: '';
+            position: absolute;
+            top: 12px;
+            left: 50%;
+            width: 5px;
+            height: 18px;
+            background: #ff7f50;
+            transform: translateX(-50%);
+            border-radius: 2px;
+        }
+
+        .buttons-row {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            width: 100%;
+        }
+
+        .small-btn {
+            background: #333; border: 1px solid #000; color: #ccc;
+            padding: 8px 5px; font-size: 0.65rem; border-radius: 4px; cursor: pointer;
+            box-shadow: 0 3px 0 #000;
+            text-align: center;
+            font-weight: bold;
+        }
+        .small-btn:active { transform: translateY(2px); box-shadow: 0 1px 0 #000; background: #444; }
+
+        .logo-area { border-top: 1px solid #444; padding-top: 10px; }
+        .logo-area h1 { margin: 0; font-size: 2.5rem; letter-spacing: -2px; }
+        .logo-area span { color: #888; font-size: 0.8rem; display: block; }
+
+        .right-panel {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .pads-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            flex-grow: 1;
+        }
+
+        .pad {
+            background: var(--pad-bg);
+            border: 5px solid var(--pad-border);
+            border-radius: 10px;
+            position: relative;
+            cursor: pointer;
+            box-shadow: 0 6px 0 #000;
+        }
+
+        .pad.active {
+            border-color: var(--pad-active);
+            background: var(--pad-bg);
+            box-shadow: 0 6px 0 #000, 0 0 20px var(--pad-active);
+        }
+
+        .pad-label { position: absolute; top: -22px; left: 0; font-size: 0.75rem; color: #888; font-weight: bold; pointer-events: none; }
+
+        .pad-footer {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+            height: 50px;
+            margin-top: 20px;
+        }
+
+        .load-btn {
+            background: #444; color: #fff; border: 1px solid #000;
+            padding: 5px 20px; font-size: 0.8rem; cursor: pointer; border-radius: 20px;
+        }
+
+        .save-btn {
+            background: #e67e22; color: white; border: none;
+            padding: 8px 30px; font-weight: bold; border-radius: 5px;
+            cursor: pointer; display: none; /* Hidden by default */
+        }
+
+        #file-input { display: none; }
+    </style>
+</head>
+<body>
+
+    <div id="landscape-warning">
+        <h2 style="color: var(--pad-border);">🔄 ROTASI LAYAR</h2>
+        <p>Gunakan mode Lanskap untuk pengalaman MPX8 sempurna.</p>
+    </div>
+
+    <div id="mpx8-container">
+        <div class="left-panel">
+            <div class="display-screen">
+                <div class="display-top">
+                    <span id="disp-kit">KIT:SET1</span>
+                    <span id="disp-set-name">INTERNAL</span>
+                </div>
+                <div class="sample-name" id="disp-name">EMPTY</div>
+                <div class="stats-grid">
+                    <div>TUNE: <span id="stat-tune">0</span></div><div>REV: 00</div>
+                    <div>TRIG: 1SH</div><div>LEV: 10</div>
+                </div>
+            </div>
+
+            <div class="controls-wrapper">
+                <div class="data-knob" id="pitch-knob"></div>
+                <div class="buttons-row">
+                    <button class="small-btn" onclick="changeSet(1)">SELECT ▲</button>
+                    <button class="small-btn" onclick="adjustVolume(0.1)">VOL +</button>
+                    <button class="small-btn" onclick="changeSet(-1)">SELECT ▼</button>
+                    <button class="small-btn" onclick="adjustVolume(-0.1)">VOL -</button>
+                </div>
+            </div>
+
+            <div class="logo-area">
+                <h1>AKAI</h1>
+                <span>professional MPX8</span>
+            </div>
+        </div>
+
+        <div class="right-panel">
+            <div class="pads-grid">
+                <div class="pad" id="pad-4"><span class="pad-label">PAD 5</span></div>
+                <div class="pad" id="pad-5"><span class="pad-label">PAD 6</span></div>
+                <div class="pad" id="pad-6"><span class="pad-label">PAD 7</span></div>
+                <div class="pad" id="pad-7"><span class="pad-label">PAD 8</span></div>
+                <div class="pad" id="pad-0"><span class="pad-label">PAD 1</span></div>
+                <div class="pad" id="pad-1"><span class="pad-label">PAD 2</span></div>
+                <div class="pad" id="pad-2"><span class="pad-label">PAD 3</span></div>
+                <div class="pad" id="pad-3"><span class="pad-label">PAD 4</span></div>
+            </div>
+
+            <div class="pad-footer">
+                <button class="load-btn" id="load-btn" onclick="triggerFileSelect()">LOAD SD</button>
+                <button class="save-btn" id="save-btn" onclick="saveConfiguration()">SAVE</button>
+            </div>
+        </div>
+    </div>
+
+    <input type="file" id="file-input" accept="audio/*">
+
+    <script>
+        const dbName = "MPX8_Storage";
+        let db;
+
+        // Initialize Database
+        const request = indexedDB.open(dbName, 1);
+        request.onupgradeneeded = (e) => {
+            db = e.target.result;
+            if (!db.objectStoreNames.contains('samples')) {
+                db.createObjectStore('samples');
+            }
+        };
+        request.onsuccess = (e) => {
+            db = e.target.result;
+            loadAllFromStorage();
+        };
+
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const masterGain = audioCtx.createGain();
+        masterGain.connect(audioCtx.destination);
+
+        let currentSetIndex = 0;
+        let lastSelectedPad = 0;
+        const totalSets = 6;
+
+        const sets = Array.from({ length: totalSets }, (_, i) => ({
+            name: `SET ${i + 1}`,
+            samples: new Array(8).fill(null),
+            padNames: new Array(8).fill("EMPTY"),
+            pitches: new Array(8).fill(1.0) 
+        }));
+
+        // KNOB LOGIC
+        const knob = document.getElementById('pitch-knob');
+        let isDragging = false;
+        let startY = 0;
+
+        const handleMove = (clientY) => {
+            if (!isDragging) return;
+            const deltaY = clientY - startY;
+            startY = clientY;
+            const sensitivity = 0.005; 
+            let p = sets[currentSetIndex].pitches[lastSelectedPad];
+            p = Math.max(0.5, Math.min(2.0, p - deltaY * sensitivity));
+            sets[currentSetIndex].pitches[lastSelectedPad] = p;
+            updateDisplay();
+            saveMetadata(); 
+        };
+
+        knob.addEventListener('mousedown', (e) => { isDragging = true; startY = e.clientY; });
+        knob.addEventListener('touchstart', (e) => { isDragging = true; startY = e.touches[0].clientY; }, {passive: false});
+        window.addEventListener('mousemove', (e) => handleMove(e.clientY));
+        window.addEventListener('touchmove', (e) => handleMove(e.touches[0].clientY), {passive: false});
+        window.addEventListener('mouseup', () => isDragging = false);
+        window.addEventListener('touchend', () => isDragging = false);
+
+        // PAD LOGIC
+        document.querySelectorAll('.pad').forEach(pad => {
+            const padIdx = parseInt(pad.id.split('-')[1]);
+            const handleTrigger = (e) => {
+                e.preventDefault();
+                if (audioCtx.state === 'suspended') audioCtx.resume();
+                lastSelectedPad = padIdx;
+                playSound(padIdx);
+            };
+            pad.addEventListener('mousedown', handleTrigger);
+            pad.addEventListener('touchstart', handleTrigger, {passive: false});
+        });
+
+        async function playSound(index) {
+            const currentSet = sets[currentSetIndex];
+            const el = document.getElementById(`pad-${index}`);
+            el.classList.add('active');
+            setTimeout(() => el.classList.remove('active'), 100);
+            updateDisplay();
+            if (currentSet.samples[index]) {
+                const source = audioCtx.createBufferSource();
+                source.buffer = currentSet.samples[index];
+                source.playbackRate.value = currentSet.pitches[index];
+                source.connect(masterGain);
+                source.start(0);
+            }
+        }
+
+        function updateDisplay() {
+            const currentSet = sets[currentSetIndex];
+            document.getElementById('disp-kit').innerText = `KIT:SET${currentSetIndex + 1}`;
+            document.getElementById('disp-set-name').innerText = currentSet.name;
+            document.getElementById('disp-name').innerText = currentSet.padNames[lastSelectedPad];
+            
+            const p = currentSet.pitches[lastSelectedPad];
+            const rotation = (p - 1) * 150; 
+            knob.style.transform = `rotate(${rotation}deg)`;
+            
+            const tuneValue = Math.round((p - 1) * 12);
+            document.getElementById('stat-tune').innerText = (tuneValue > 0 ? "+" : "") + tuneValue;
+        }
+
+        function changeSet(dir) {
+            currentSetIndex = (currentSetIndex + dir + totalSets) % totalSets;
+            updateDisplay();
+            saveMetadata();
+        }
+
+        function triggerFileSelect() { document.getElementById('file-input').click(); }
+
+        document.getElementById('file-input').addEventListener('change', async function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            const arrayBuffer = await file.arrayBuffer();
+            saveToStorage(currentSetIndex, lastSelectedPad, arrayBuffer, file.name);
+            processAudio(arrayBuffer, currentSetIndex, lastSelectedPad, file.name);
+            
+            // Show Save button after loading
+            document.getElementById('save-btn').style.display = 'block';
+            document.getElementById('load-btn').style.display = 'none';
+        });
+
+        async function processAudio(arrayBuffer, setIdx, padIdx, fileName) {
+            try {
+                const decodedData = await audioCtx.decodeAudioData(arrayBuffer.slice(0));
+                sets[setIdx].samples[padIdx] = decodedData;
+                sets[setIdx].padNames[padIdx] = fileName.split('.')[0].toUpperCase().substring(0, 10);
+                updateDisplay();
+            } catch (err) {
+                console.error("Audio Decode Error", err);
+            }
+        }
+
+        // SAVE & RENAME KIT FUNCTION
+        function saveConfiguration() {
+            const currentSet = sets[currentSetIndex];
+            const newName = prompt("Beri nama untuk Set ini:", currentSet.name);
+            
+            if (newName !== null) {
+                currentSet.name = newName.toUpperCase().substring(0, 12);
+                saveMetadata();
+                updateDisplay();
+                
+                // Toggle buttons back
+                document.getElementById('save-btn').style.display = 'none';
+                document.getElementById('load-btn').style.display = 'block';
+            }
+        }
+
+        function saveToStorage(setIdx, padIdx, buffer, fileName) {
+            const transaction = db.transaction(['samples'], 'readwrite');
+            const key = `sample_${setIdx}_${padIdx}`;
+            transaction.objectStore('samples').put({ buffer, fileName }, key);
+            saveMetadata();
+        }
+
+        function saveMetadata() {
+            const meta = sets.map(s => ({
+                name: s.name,
+                padNames: s.padNames,
+                pitches: s.pitches
+            }));
+            localStorage.setItem('mpx8_meta', JSON.stringify(meta));
+            localStorage.setItem('mpx8_last_set', currentSetIndex);
+        }
+
+        function loadAllFromStorage() {
+            const savedMeta = localStorage.getItem('mpx8_meta');
+            if (savedMeta) {
+                const parsed = JSON.parse(savedMeta);
+                parsed.forEach((m, i) => {
+                    sets[i].name = m.name || `SET ${i+1}`;
+                    sets[i].padNames = m.padNames;
+                    sets[i].pitches = m.pitches;
+                });
+            }
+            currentSetIndex = parseInt(localStorage.getItem('mpx8_last_set')) || 0;
+
+            const transaction = db.transaction(['samples'], 'readonly');
+            const store = transaction.objectStore('samples');
+            
+            for(let s=0; s<totalSets; s++) {
+                for(let p=0; p<8; p++) {
+                    const key = `sample_${s}_${p}`;
+                    const req = store.get(key);
+                    req.onsuccess = () => {
+                        if (req.result) {
+                            processAudio(req.result.buffer, s, p, req.result.fileName);
+                        }
+                    };
+                }
+            }
+            updateDisplay();
+        }
+
+        function adjustVolume(val) {
+            let newVol = masterGain.gain.value + val;
+            masterGain.gain.value = Math.max(0, Math.min(2.0, newVol));
+        }
+    </script>
+</body>
+</html>
